@@ -1,8 +1,7 @@
 __pycache__/
 *.pyc
 .env
-*.csv
-history/
 .local/
 .trae/
 sources/x/x_tweets_config.txt
+sources/x/x_tweets.csv

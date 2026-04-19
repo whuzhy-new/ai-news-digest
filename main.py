@@ -1,6 +1,7 @@
 import argparse
 import csv
 import importlib.util
+import os
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
@@ -542,8 +543,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--github-since", default="daily", choices=["daily", "weekly", "monthly"])
     parser.add_argument("--github-language", default="")
 
-    parser.add_argument("--x-auth-token", default="")
-    parser.add_argument("--x-ct0", default="")
+    parser.add_argument("--x-auth-token", default=os.environ.get("X_AUTH_TOKEN", ""))
+    parser.add_argument("--x-ct0", default=os.environ.get("X_CT0", ""))
     parser.add_argument("--x-count", type=int, default=20)
     parser.add_argument("--x-max-pages", type=int, default=1)
     parser.add_argument("--x-accounts", nargs="*", default=None)
