@@ -3,7 +3,9 @@ import json
 import os
 import time
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+
+CST = timezone(timedelta(hours=8))
 from pathlib import Path
 
 import requests
@@ -214,7 +216,7 @@ def resolve_user_id(session, handle, auth_token, ct0):
 
 def parse_twitter_time(time_str):
     dt = datetime.strptime(time_str, "%a %b %d %H:%M:%S %z %Y")
-    return dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    return dt.astimezone(CST).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def build_headers(ct0):

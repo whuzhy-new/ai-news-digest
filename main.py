@@ -5,7 +5,7 @@ import os
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Any, Callable, Optional
@@ -38,6 +38,8 @@ GENERIC_ID_KEYS = (
     "story_id",
     "storyId",
 )
+
+CST = timezone(timedelta(hours=8))
 
 
 @dataclass(frozen=True)
@@ -100,17 +102,22 @@ def standardize_time(value: Any) -> str:
 
     for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
         try:
-            return datetime.strptime(text, fmt).strftime("%Y-%m-%d %H:%M:%S")
+            dt = datetime.strptime(text, fmt)
+            if dt.tzinfo is None:
+                return dt.strftime("%Y-%m-%d %H:%M:%S")
+            return dt.astimezone(CST).strftime("%Y-%m-%d %H:%M:%S")
         except ValueError:
             pass
 
     try:
-        return datetime.fromisoformat(text.replace("Z", "+00:00")).strftime("%Y-%m-%d %H:%M:%S")
+        dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        return dt.astimezone(CST).strftime("%Y-%m-%d %H:%M:%S")
     except ValueError:
         pass
 
     try:
-        return parsedate_to_datetime(text).strftime("%Y-%m-%d %H:%M:%S")
+        dt = parsedate_to_datetime(text)
+        return dt.astimezone(CST).strftime("%Y-%m-%d %H:%M:%S")
     except (TypeError, ValueError, IndexError, OverflowError):
         return text
 
@@ -306,7 +313,7 @@ def write_history_snapshot(
     history_limit: int,
 ) -> Path:
     history_dir.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(CST).strftime("%Y%m%d_%H%M%S")
     history_path = history_dir / f"all_sources_new_{timestamp}.csv"
     export_csv(new_rows, history_path)
 
