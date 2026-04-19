@@ -5,6 +5,9 @@ on:
     - cron: "17 1,7,13,19 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   fetch:
     runs-on: ubuntu-latest
