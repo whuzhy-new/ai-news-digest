@@ -612,7 +612,11 @@ def main() -> None:
     deduped_rows.sort(key=row_sort_key, reverse=True)
     existing_rows = load_csv_rows(output_path)
     new_rows = filter_new_rows(deduped_rows, existing_rows)
-    snapshot_path = write_history_snapshot(new_rows, history_dir, history_limit)
+    is_initial = len(existing_rows) == 0
+    if is_initial:
+        snapshot_path = None
+    else:
+        snapshot_path = write_history_snapshot(new_rows, history_dir, history_limit)
     master_rows = update_master_csv(existing_rows, new_rows, output_path)
 
     print()
@@ -622,10 +626,14 @@ def main() -> None:
     print(f"抓取总条数: {len(all_rows)}")
     print(f"本次去重后条数: {len(deduped_rows)}")
     print(f"去重移除数: {duplicate_count}")
-    print(f"本次新增条数: {len(new_rows)}")
-    print(f"总表累计条数: {len(master_rows)}")
+    if is_initial:
+        print(f"首次建库，写入总表 {len(master_rows)} 条（不生成分表快照）")
+    else:
+        print(f"本次新增条数: {len(new_rows)}")
+        print(f"总表累计条数: {len(master_rows)}")
     print(f"总表文件: {output_path}")
-    print(f"本次分表快照: {snapshot_path}")
+    if snapshot_path:
+        print(f"本次分表快照: {snapshot_path}")
     if failed_sources:
         print("失败数据源:")
         for source_name, reason in failed_sources:
