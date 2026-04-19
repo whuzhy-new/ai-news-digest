@@ -433,12 +433,22 @@ def save_config(auth_token, ct0):
     os.chmod(CONFIG_FILE, 0o600)
 
 
-def main():
+def get_credentials():
+    auth_token = os.environ.get("X_AUTH_TOKEN", "")
+    ct0 = os.environ.get("X_CT0", "")
+    if auth_token and ct0:
+        return auth_token, ct0
     config = load_config()
+    return (
+        auth_token or config.get("auth_token", ""),
+        ct0 or config.get("ct0", ""),
+    )
 
+
+def main():
     parser = argparse.ArgumentParser(description="Fetch tweets from X accounts via GraphQL API")
-    parser.add_argument("--auth-token", default=config.get("auth_token", ""), help="X auth_token cookie (saved to config if provided)")
-    parser.add_argument("--ct0", default=config.get("ct0", ""), help="X ct0 cookie (saved to config if provided)")
+    parser.add_argument("--auth-token", default="", help="X auth_token cookie (overrides env/config)")
+    parser.add_argument("--ct0", default="", help="X ct0 cookie (overrides env/config)")
     parser.add_argument("--count", type=int, default=20, help="Tweets per page (default: 20)")
     parser.add_argument("--max-pages", type=int, default=1, help="Max pages per account (default: 1)")
     parser.add_argument("--output", default="x_tweets.csv", help="Output CSV filename")
@@ -449,18 +459,20 @@ def main():
     )
     args = parser.parse_args()
 
-    if not args.auth_token or not args.ct0:
-        if config.get("auth_token") and config.get("ct0"):
-            args.auth_token = config["auth_token"]
-            args.ct0 = config["ct0"]
-            print(f"Loaded credentials from {CONFIG_FILE}")
-        else:
-            print("Error: No credentials found. Run once with --auth-token and --ct0 to save them.")
-            print(f"  Config file: {CONFIG_FILE}")
-            return
+    auth_token, ct0 = get_credentials()
+    if args.auth_token:
+        auth_token = args.auth_token
+    if args.ct0:
+        ct0 = args.ct0
 
-    if args.auth_token != config.get("auth_token") or args.ct0 != config.get("ct0"):
-        save_config(args.auth_token, args.ct0)
+    if not auth_token or not ct0:
+        print("Error: No credentials found. Set X_AUTH_TOKEN and X_CT0 env vars, or run with --auth-token and --ct0.")
+        print(f"  Config file fallback: {CONFIG_FILE}")
+        return
+
+    config = load_config()
+    if auth_token != config.get("auth_token") or ct0 != config.get("ct0"):
+        save_config(auth_token, ct0)
         print(f"Credentials saved to {CONFIG_FILE}")
 
     if args.accounts:
@@ -481,7 +493,7 @@ def main():
     for account in accounts:
         if not account["user_id"]:
             print(f"Resolving user_id for @{account['handle']}...")
-            user_id = resolve_user_id(session, account["handle"], args.auth_token, args.ct0)
+            user_id = resolve_user_id(session, account["handle"], auth_token, ct0)
             if not user_id:
                 print(f"  Skipping @{account['handle']} (could not resolve user_id)")
                 continue
@@ -495,8 +507,8 @@ def main():
             account["user_id"],
             args.count,
             args.max_pages,
-            args.auth_token,
-            args.ct0,
+            auth_token,
+            ct0,
             handle=account["handle"],
             name=account.get("name", ""),
         )
