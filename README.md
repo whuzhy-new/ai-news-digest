@@ -1,4 +1,4 @@
-# AI News Skill
+# AI News Digest
 
 多源并发汇总抓取工具，从 15 个科技新闻源采集数据，统一归一化、去重后输出 CSV。
 
@@ -44,7 +44,7 @@
 │   └── x/                           # X/Twitter 子模块
 │       ├── x_tweets.py
 │       ├── x_accounts.json          # 账号列表（自动维护 user_id）
-│       └── x_tweets_config.txt      # Cookie 配置
+│       └── x_tweets_config.txt      # Cookie 配置（不入库）
 ├── all_sources_master.csv           # 总表（运行后生成）
 └── history/                         # 分表快照（运行后生成）
     ├── all_sources_new_20260420_080000.csv
@@ -67,7 +67,7 @@
 | `headline` | 标题 |
 | `abstract` | 摘要 |
 | `img_url` | 封面图 |
-| `publish_time` | 发布时间（统一 `YYYY-MM-DD HH:MM:SS`） |
+| `publish_time` | 发布时间（统一 UTC+8 `YYYY-MM-DD HH:MM:SS`） |
 
 ## 去重机制
 
@@ -117,25 +117,17 @@ python3 main.py --max-pages 3 --page-size 30 --workers 8
 | `--github-since` | `daily` | 周期：`daily` / `weekly` / `monthly` |
 | `--github-language` | | 按编程语言筛选 |
 
-### Hacker News
-
-| 参数 | 默认值 | 说明 |
-|---|---|---|
-| `--hn-feed` | `top` | 类型：`top` / `new` / `best` / `ask` / `show` / `job` |
-| `--hn-limit` | `30` | 抓取条数 |
-| `--hn-delay` | `0.1` | 请求间隔秒数 |
-
 ### X (Twitter)
 
 | 参数 | 默认值 | 说明 |
 |---|---|---|
-| `--x-auth-token` | | Cookie auth_token |
-| `--x-ct0` | | Cookie ct0 (csrf token) |
+| `--x-auth-token` | | Cookie auth_token（或设环境变量 `X_AUTH_TOKEN`） |
+| `--x-ct0` | | Cookie ct0（或设环境变量 `X_CT0`） |
 | `--x-count` | `20` | 每个账号抓取条数 |
 | `--x-max-pages` | `1` | 最大翻页数 |
 | `--x-accounts` | | 账号列表，格式 `handle` 或 `handle:user_id` |
 
-X 的 Cookie 凭证首次通过命令行传入后会自动保存到 `sources/x/x_tweets_config.txt`，后续运行无需重复传入。
+X 的凭证优先从环境变量 `X_AUTH_TOKEN` / `X_CT0` 读取，也可通过命令行传入，回退到 `sources/x/x_tweets_config.txt`。
 
 ## 新增数据源
 
