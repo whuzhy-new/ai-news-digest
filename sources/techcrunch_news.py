@@ -76,11 +76,13 @@ def extract_article(item, media_map):
     media_id = item.get("featured_media", 0)
     img_url = media_map.get(media_id, "") if media_id else ""
 
-    date_str = item.get("date", "")
+    date_str = item.get("date_gmt", "") or item.get("date", "")
     publish_time = ""
     if date_str:
         try:
             dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
             publish_time = dt.astimezone(CST).strftime("%Y-%m-%d %H:%M:%S")
         except (ValueError, TypeError):
             publish_time = date_str.replace("T", " ")

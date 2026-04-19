@@ -3,15 +3,12 @@ import json
 import re
 import time
 import argparse
-from datetime import datetime, timezone, timedelta
 from urllib.request import Request, urlopen
 from urllib.parse import urlencode
 
 API_URL = "https://www.qbitai.com/wp-json/wp/v2/posts"
 CATEGORY_ID = 21
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
-
-CST = timezone(timedelta(hours=8))
 
 
 def fetch_json(url):
@@ -72,13 +69,7 @@ def extract_article(item, media_map):
     img_url = media_map.get(media_id, "") if media_id else ""
 
     date_str = item.get("date", "")
-    publish_time = ""
-    if date_str:
-        try:
-            dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-            publish_time = dt.astimezone(CST).strftime("%Y-%m-%d %H:%M:%S")
-        except (ValueError, TypeError):
-            publish_time = date_str.replace("T", " ")
+    publish_time = date_str.replace("T", " ") if date_str else ""
 
     return {
         "id": article_id,
